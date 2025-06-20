@@ -7,6 +7,7 @@ import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
 from apriltag_ros.msg import AprilTagDetectionArray
+from geometry_msgs.msg import Point
 import message_filters
 
 import argparse
@@ -50,6 +51,7 @@ class DepthEvaluator:
         self.ts.registerCallback(self.callback)
 
         self.vis_pub = rospy.Publisher('/depth_eval/roi_visualization', Image, queue_size=1)
+        self.data_pub = rospy.Publisher('/depth_eval/eval_data', Point, queue_size=10)
         
         rospy.loginfo("Depth evaluator node started and waiting for messages.")
 
@@ -156,13 +158,21 @@ class DepthEvaluator:
         depth_roi = depth_roi[np.isfinite(depth_roi)]
         depth_roi = depth_roi[(depth_roi > 0.1) & (depth_roi < 10.0)]
 
-        mean_depth = 0.0
+        mean_depth = 0.0 # 平均深度
         if depth_roi.size > 0:
             mean_depth = np.mean(depth_roi)
         else:
             rospy.logwarn_throttle(5, "No valid depth points in ROI.")
 
         rospy.loginfo(f"Tag at ({tx:.2f}, {ty:.2f}, {tz:.2f})m, estimated avg depth in ROI: {mean_depth:.2f}m")
+
+        # --- BEGIN: Publish evaluation data ---
+        eval_data_msg = Point()
+        eval_data_msg.x = tz # Ground truth distance from tag
+        eval_data_msg.y = mean_depth # Estimated depth from disparity
+        eval_data_msg.z = tz - mean_depth # The error
+        self.data_pub.publish(eval_data_msg)
+        # --- END: Publish evaluation data ---
 
         if vis_disparity:
             vis_img = vis_disparity(disparity_map)
