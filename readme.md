@@ -33,6 +33,9 @@ python3 scripts/run_demo_topic.py --ckpt_dir ./pretrained_models/23-51-11/model_
 
 # fast version - 2.5Hz 4090D i9-13900KF
 python3 scripts/run_demo_topic.py --ckpt_dir ./pretrained_models/11-33-40/model_best_bp2.pth --out_dir ./test_outputs/ --vis_mode publish
+
+# opt优化过后的版本 - 3Hz 4090D i9-13900KF
+python3 scripts/run_demo_topic_opt.py --ckpt_dir ./pretrained_models/11-33-40/model_best_bp2.pth --vis_mode publish --valid_iters 32
 ```
 
 ### 验证tag码的深度信息 和 FoudationStereo的深度 之间的损失
